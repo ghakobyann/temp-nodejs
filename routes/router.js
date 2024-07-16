@@ -9,6 +9,10 @@ const router = Router();
 router.post("/", (req, res) => {
     const user = req.body.username;
 
+    if (!user) {
+        res.status(400).send("The required field `username` was missing!");
+    }
+
     User.create({ username: user })
         .then(({ username, _id }) =>
             res.json({
@@ -16,7 +20,16 @@ router.post("/", (req, res) => {
                 _id,
             })
         )
-        .catch(console.error);
+        .catch((error) => {
+            if (error.code === 11000) {
+                return res
+                    .status(400)
+                    .send(
+                        "The username is already used, try something else."
+                    );
+            }
+            res.json(error);
+        });
 });
 
 /**
@@ -34,6 +47,10 @@ router.get("/", async (_, res) => {
 router.post("/:_id/exercises", (req, res) => {
     const userId = req.params._id;
     const { description, duration, date } = req.body;
+
+    if (!userId || !description || !duration) {
+        return res.status(400).send("One of the required fields is missing");
+    }
 
     const newExercise = {
         description,
@@ -59,7 +76,9 @@ router.post("/:_id/exercises", (req, res) => {
                 });
             });
         })
-        .catch(console.error);
+        .catch((error) => {
+            res.json(error);
+        });
 });
 
 /**
@@ -89,11 +108,13 @@ router.get("/:_id/logs", (req, res) => {
 
             if (limit) logs = logs.slice(0, limit);
 
-            const converted = logs.map(({ description, duration, date }) => ({
-                description,
-                duration,
-                date: new Date(date).toDateString(),
-            }));
+            const converted = logs
+                .sort((a, b) => a.date - b.date)
+                .map(({ description, duration, date }) => ({
+                    description,
+                    duration,
+                    date: new Date(date).toDateString(),
+                }));
 
             res.json({
                 _id,
@@ -102,7 +123,9 @@ router.get("/:_id/logs", (req, res) => {
                 log: converted,
             });
         })
-        .catch(console.error);
+        .catch((error) => {
+            res.json(error);
+        });
 });
 
 module.exports = router;
