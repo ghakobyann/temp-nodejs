@@ -10,7 +10,9 @@ router.post("/", (req, res) => {
     const user = req.body.username;
 
     if (!user) {
-        return res.status(400).send("The required field `username` was missing!");
+        return res
+            .status(400)
+            .send("The required field `username` was missing!");
     }
 
     User.create({ username: user })
@@ -24,9 +26,7 @@ router.post("/", (req, res) => {
             if (error.code === 11000) {
                 return res
                     .status(400)
-                    .send(
-                        "The username is already used, try something else."
-                    );
+                    .send("The username is already used, try something else.");
             }
             res.json(error);
         });
@@ -61,6 +61,10 @@ router.post("/:_id/exercises", (req, res) => {
 
     User.findById({ _id: userId })
         .then((selected) => {
+            if (!selected) {
+                return res.status(404).send("User was not found!");
+            }
+
             selected.log.push(newExercise);
             const index = selected.log.length - 1;
 
