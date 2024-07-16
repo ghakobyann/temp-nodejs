@@ -10,7 +10,7 @@ router.post("/", (req, res) => {
     const user = req.body.username;
 
     if (!user) {
-        res.status(400).send("The required field `username` was missing!");
+        return res.status(400).send("The required field `username` was missing!");
     }
 
     User.create({ username: user })
