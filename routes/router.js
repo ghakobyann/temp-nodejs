@@ -57,7 +57,15 @@ router.post("/:_id/exercises", (req, res) => {
         duration,
     };
 
-    if (date) newExercise.date = new Date(date);
+    if (date) {
+        const dateObj = new Date(date);
+
+        if (isNaN(dateObj)) {
+            return res.status(400).send("Wrong format of date was submited!");
+        }
+
+        newExercise.date = dateObj;
+    }
 
     User.findById({ _id: userId })
         .then((selected) => {
