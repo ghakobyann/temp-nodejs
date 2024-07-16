@@ -62,10 +62,7 @@ router.post("/:_id/exercises", (req, res) => {
     User.findById({ _id: userId })
         .then((selected) => {
             if (!selected) {
-                throw new Error({
-                    code: 404,
-                    message: "User not found!",
-                });
+                throw404();
             }
 
             selected.log.push(newExercise);
@@ -98,24 +95,25 @@ router.get("/:_id/logs", (req, res) => {
 
     User.findOne({ _id: req.params._id })
         .then((selected) => {
-            let logs = selected.log;
-            const { _id, username, __v } = selected;
+            if (!selected) {
+                throw404();
+            }
 
-            logs.filter(({ date }) => {
-                if (from && to) {
-                    return date >= new Date(from) && date <= new Date(to);
-                }
-                if (from) {
-                    return date >= new Date(from);
-                }
-                if (to) {
-                    return date <= new Date(to);
-                }
-            });
+            const { _id, username, log } = selected;
 
-            if (limit) logs = logs.slice(0, limit);
-
-            const converted = logs
+            const converted = log
+                .filter(({ date }) => {
+                    if (from && to) {
+                        return date >= new Date(from) && date <= new Date(to);
+                    }
+                    if (from) {
+                        return date >= new Date(from);
+                    }
+                    if (to) {
+                        return date <= new Date(to);
+                    }
+                    return true;
+                })
                 .sort((a, b) => a.date - b.date)
                 .map(({ description, duration, date }) => ({
                     description,
@@ -126,13 +124,20 @@ router.get("/:_id/logs", (req, res) => {
             res.json({
                 _id,
                 username,
-                count: __v,
-                log: converted,
+                count: converted.length,
+                log: limit ? converted.slice(0, limit) : converted,
             });
         })
-        .catch((error) => {
-            res.json(error);
+        .catch(() => {
+            res.status(404).send("The User was not Found!");
         });
 });
 
 module.exports = router;
+
+function throw404() {
+    throw new Error({
+        code: 404,
+        message: "User not found!",
+    });
+}
