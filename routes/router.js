@@ -62,7 +62,10 @@ router.post("/:_id/exercises", (req, res) => {
     User.findById({ _id: userId })
         .then((selected) => {
             if (!selected) {
-                return res.status(404).send("User was not found!");
+                throw new Error({
+                    code: 404,
+                    message: "User not found!",
+                });
             }
 
             selected.log.push(newExercise);
@@ -80,8 +83,8 @@ router.post("/:_id/exercises", (req, res) => {
                 });
             });
         })
-        .catch((error) => {
-            res.json(error);
+        .catch(() => {
+            res.status(404).send("The User was not Found!");
         });
 });
 
